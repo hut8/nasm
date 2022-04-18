@@ -2834,6 +2834,18 @@ static int process_ea(operand *input, ea *output, int bits,
             goto err;
         }
 
+
+        /* If RIP-relative, indexreg and scale must not be present:
+         * [basereg + indexreg*scale + displacement]
+         * https://bugzilla.nasm.us/show_bug.cgi?id=3392797
+         */
+        if ((input->eaflags & EAF_REL) &&
+            ((input->indexreg != -1) || (input->scale != -1))) {
+            nasm_warn(WARN_OTHER | ERR_PASS2,
+                      "invalid addressing mode: RIP-relative address "
+                      "cannot contain index register or scale");
+        }
+
         if (input->basereg == -1 &&
             (input->indexreg == -1 || input->scale == 0)) {
             /*
